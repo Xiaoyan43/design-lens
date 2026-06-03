@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Node / Next
+node_modules/
+.next/
+out/
+
+# Env / secrets
+.env
+.env.local
+*.local
+
+# Eval images (royalty-free, kept out of git)
+eval/images/
+eval/labels.jsonl
+
+# Local catalogue store (demo persistence)
+backend/designlens.db
+backend/uploads/
+
+# OS
+.DS_Store
