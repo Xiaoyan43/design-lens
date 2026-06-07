@@ -64,6 +64,7 @@ type Card = {
 };
 
 const pct = (n: number) => `${Math.round((n ?? 0) * 100)}%`;
+const padIndex = (n: number) => String(n + 1).padStart(2, "0");
 
 function Chips({ items }: { items: string[] }) {
   if (!items || items.length === 0) return <span style={{ color: "var(--faint)" }}>—</span>;
@@ -102,13 +103,18 @@ function Modal({ card, onClose }: { card: Card; onClose: () => void }) {
     <div className={`overlay${show ? " show" : ""}`} onClick={close}>
       <div className={`modal${show ? " show" : ""}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-figure">
+          <span className="modal-frame-tl" aria-hidden />
+          <span className="modal-frame-tr" aria-hidden />
+          <span className="modal-frame-bl" aria-hidden />
+          <span className="modal-frame-br" aria-hidden />
           <img className="modal-img" src={`${API}${card.image_url}`} alt={c.alt_text_en} />
         </div>
         <div className="modal-body">
           <div className="modal-head">
             <div>
+              <div className="modal-kicker">Catalogue entry</div>
               <div className="modal-title">{a.building_type.replace(/_/g, " ")}</div>
-              <div style={{ marginTop: 7 }}>
+              <div className="modal-confidence">
                 <span className={`score${card.result.confidence < 0.5 ? " low" : ""}`}>
                   confidence {pct(card.result.confidence)}
                 </span>
@@ -120,7 +126,7 @@ function Modal({ card, onClose }: { card: Card; onClose: () => void }) {
           </div>
 
           {card.result.low_confidence_fields?.length > 0 && (
-            <p className="warn" style={{ marginTop: 14 }}>
+            <p className="warn" style={{ marginTop: 16 }}>
               Low confidence — review: {card.result.low_confidence_fields.join(", ")}
             </p>
           )}
@@ -223,52 +229,87 @@ export default function Home() {
     <>
       <header className="app-header">
         <div className="app-header-inner">
-          <span className="logo" />
+          <span className="logo" aria-hidden />
           <span className="wordmark">DesignLens</span>
-          <span className="badge">Demo</span>
+          <span className="badge">Studio Demo</span>
           <span className="spacer" />
-          <span className="sub">AI cataloguing for design studios</span>
+          <span className="sub">AI cataloguing · EN / 中文</span>
         </div>
       </header>
 
-      <main className="container">
-        <div className="kicker">DesignLens — AI cataloguing</div>
-        <h1 className="hero">
-          A studio&apos;s work,
-          <br />
-          <em>catalogued.</em>
-        </h1>
-        <p className="lead">
-          Drop in a building image and it&apos;s analysed into structured attributes and bilingual
-          (EN&nbsp;/&nbsp;中文) copy, then saved to a searchable library. Sample images only · vision via
-          the Claude API, validated server-side, with low-confidence fields flagged for review.
-        </p>
+      <div className="page-shell">
+      <section className="hero-panel">
+        <div className="hero-inner">
+          <div className="hero-copy">
+            <div className="kicker">Architecture archive</div>
+            <h1 className="hero">
+              A studio&apos;s work,
+              <br />
+              <em>catalogued.</em>
+            </h1>
+            <p className="lead">
+              Drop in a building image — structured attributes and bilingual copy, validated
+              server-side and saved to your searchable library.
+            </p>
+            <div className="hero-stats">
+              <div className="stat">
+                <span className="stat-val">{assets.length} assets</span>
+                <span className="stat-label">In library</span>
+              </div>
+              <div className="stat">
+                <span className="stat-val">EN · 中文</span>
+                <span className="stat-label">Bilingual copy</span>
+              </div>
+              <div className="stat">
+                <span className="stat-val">Claude vision</span>
+                <span className="stat-label">Extraction</span>
+              </div>
+            </div>
+          </div>
 
-        <div
-          className={`dropzone${dragging ? " drag" : ""}`}
-          onClick={() => inputRef.current?.click()}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={onDrop}
-        >
-          <strong>{loading ? "Analysing…" : "Drop a building image here, or click to choose"}</strong>
-          <div className="hint">JPG / PNG / WebP · the result is saved to the library below</div>
-          <input ref={inputRef} type="file" accept="image/*" onChange={onInput} hidden />
+          <div className="dropzone-wrap">
+            <div
+              className={`dropzone${dragging ? " drag" : ""}${loading ? " loading" : ""}`}
+              onClick={() => !loading && inputRef.current?.click()}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={onDrop}
+            >
+              <span className="corner-bl" aria-hidden />
+              <span className="corner-br" aria-hidden />
+              <div className="dropzone-icon" aria-hidden>
+                +
+              </div>
+              <strong>
+                {loading ? "Analysing image…" : "Drop a building image, or click to browse"}
+              </strong>
+              <div className="hint">JPG · PNG · WebP · saved to library</div>
+              <div className="dropzone-loader">
+                <div className="loader-ring" />
+                <span className="loader-text">Extracting attributes</span>
+              </div>
+              <input ref={inputRef} type="file" accept="image/*" onChange={onInput} hidden />
+            </div>
+            {error && <p className="error">Error: {error}</p>}
+          </div>
         </div>
-        {error && (
-          <p className="error" style={{ marginTop: 12 }}>
-            Error: {error}
-          </p>
-        )}
+      </section>
 
-        <div className="eyebrow">Library</div>
+      <main className="container library-panel">
+        <div className="library-head">
+          <div className="eyebrow">Project library</div>
+          <div className="library-count">
+            <span>{assets.length}</span> catalogue entries
+          </div>
+        </div>
+
         <div className="filters">
           <input
             className="input"
-            placeholder="Search e.g. coastal timber, brutalist, glass…"
+            placeholder="Search materials, styles, setting…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -283,18 +324,23 @@ export default function Home() {
         </div>
 
         {assets.length === 0 ? (
-          <div className="empty">No items yet — drop an image above to start the library.</div>
+          <div className="empty">No catalogue entries yet — upload an image above to begin.</div>
         ) : (
           <div className="grid">
             {assets.map((a, i) => (
               <div
                 className="asset"
                 key={a.id}
-                style={{ animationDelay: `${Math.min(i * 45, 360)}ms` }}
+                style={{ animationDelay: `${Math.min(i * 60, 480)}ms` }}
                 onClick={() => setSelected(a)}
               >
+                <span className="asset-index">{padIndex(i)}</span>
                 <div className="asset-thumb-wrap">
-                  <img className="asset-thumb" src={`${API}${a.image_url}`} alt={a.result.copy.alt_text_en} />
+                  <img
+                    className="asset-thumb"
+                    src={`${API}${a.image_url}`}
+                    alt={a.result.copy.alt_text_en}
+                  />
                 </div>
                 <div className="asset-body">
                   <div className="asset-title">
@@ -311,6 +357,7 @@ export default function Home() {
           </div>
         )}
       </main>
+      </div>
 
       {selected && <Modal card={selected} onClose={() => setSelected(null)} />}
     </>
